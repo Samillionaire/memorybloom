@@ -63,51 +63,82 @@ class _NetworkImg extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+/// Tab shell: the bottom bar stays fixed; only the body swaps between tabs.
+/// `IndexedStack` keeps every tab's state alive (scroll position, toggles…).
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _index = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kSurface,
       drawer: const SidebarDrawer(),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            const _TopBar(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: const [
-                  _Greeting(),
-                  SizedBox(height: 24),
-                  _CreateEventCard(),
-                  SizedBox(height: 28),
-                  _SectionHeader(),
-                  SizedBox(height: 16),
-                  _EventCard(
-                    imageUrl: _kSummerUrl,
-                    title: "Summer Retreat '24",
-                    memories: '142 Memories',
-                    status: _EventStatus.live,
-                    fallback: Color(0xFF3B4A3A),
-                  ),
-                  SizedBox(height: 16),
-                  _EventCard(
-                    imageUrl: _kWeddingUrl,
-                    title: "Anna & David's Wedding",
-                    memories: '850 Memories',
-                    status: _EventStatus.completed,
-                    fallback: Color(0xFF4A3A3A),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      body: IndexedStack(
+        index: _index,
+        children: [
+          const _HomeTab(),
+          // Back returns to the Home tab instead of popping the shell.
+          EventOverviewScreen(onBack: () => setState(() => _index = 0)),
+          ProfileScreen(onBack: () => setState(() => _index = 0)),
+        ],
       ),
-      bottomNavigationBar: const _BottomNav(),
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _index,
+        onTap: (i) => setState(() => _index = i),
+      ),
+    );
+  }
+}
+
+// ── Home tab content ─────────────────────────────────────────────────────────
+
+class _HomeTab extends StatelessWidget {
+  const _HomeTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
+          const _TopBar(),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: const [
+                _Greeting(),
+                SizedBox(height: 24),
+                _CreateEventCard(),
+                SizedBox(height: 28),
+                _SectionHeader(),
+                SizedBox(height: 16),
+                _EventCard(
+                  imageUrl: _kSummerUrl,
+                  title: "Summer Retreat '24",
+                  memories: '142 Memories',
+                  status: _EventStatus.live,
+                  fallback: Color(0xFF3B4A3A),
+                ),
+                SizedBox(height: 16),
+                _EventCard(
+                  imageUrl: _kWeddingUrl,
+                  title: "Anna & David's Wedding",
+                  memories: '850 Memories',
+                  status: _EventStatus.completed,
+                  fallback: Color(0xFF4A3A3A),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -450,110 +481,118 @@ class _StatusBadge extends StatelessWidget {
 // ── Bottom navigation ───────────────────────────────────────────────────────
 
 class _BottomNav extends StatelessWidget {
-  const _BottomNav();
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _BottomNav({required this.currentIndex, required this.onTap});
+
+  static const _items = [
+    (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.calendar_today_rounded, label: 'Event'),
+    (icon: Icons.person_rounded, label: 'Profile'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: _kSurface,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF4A3228).withValues(alpha: 0.10),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            const _NavItem(
-                icon: Icons.home_rounded, label: 'Home', active: true),
-            _NavItem(
-              icon: Icons.calendar_today_rounded,
-              label: 'Event',
-              active: false,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EventOverviewScreen()),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4A3228).withValues(alpha: 0.10),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
-            ),
-            _NavItem(
-              icon: Icons.person_rounded,
-              label: 'Profile',
-              active: false,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              for (var i = 0; i < _items.length; i++)
+                _NavItem(
+                  icon: _items[i].icon,
+                  label: _items[i].label,
+                  active: currentIndex == i,
+                  onTap: () => onTap(i),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// Animated pill: expands to show the label when active, collapses when not.
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool active;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.active,
-    this.onTap,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (active) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        decoration: BoxDecoration(
-          color: _kPrimary,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    const duration = Duration(milliseconds: 280);
+    const curve = Curves.easeOutCubic;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        child: Column(
+      child: AnimatedContainer(
+        duration: duration,
+        curve: curve,
+        padding: EdgeInsets.symmetric(
+          horizontal: active ? 18 : 14,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: active ? _kPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 22, color: _kOutline),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: _kOutline,
+            AnimatedScale(
+              duration: duration,
+              curve: curve,
+              scale: active ? 1.05 : 1.0,
+              child: Icon(
+                icon,
+                size: 22,
+                color: active ? Colors.white : _kOutline,
+              ),
+            ),
+            // Label slides/fades in only for the active tab.
+            ClipRect(
+              child: AnimatedSize(
+                duration: duration,
+                curve: curve,
+                child: active
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          label,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
           ],

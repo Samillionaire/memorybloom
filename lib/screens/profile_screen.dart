@@ -16,10 +16,15 @@ class ProfileScreen extends StatefulWidget {
   final String name;
   final String email;
 
+  /// Custom back action. When null, falls back to popping the route.
+  /// Used by the tab shell to return to the Home tab instead.
+  final VoidCallback? onBack;
+
   const ProfileScreen({
     super.key,
     this.name = 'Sameer',
     this.email = 'sameer15v3@gmail.com',
+    this.onBack,
   });
 
   @override
@@ -36,7 +41,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: _kSurface,
       body: Column(
         children: [
-          _Header(onBack: () => Navigator.maybePop(context)),
+          _Header(
+            onBack: widget.onBack ?? () => Navigator.maybePop(context),
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),

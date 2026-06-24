@@ -19,6 +19,10 @@ class EventOverviewScreen extends StatefulWidget {
   final String location;
   final String imageUrl;
 
+  /// Custom back action. When null, falls back to popping the route.
+  /// Used by the tab shell to return to the Home tab instead.
+  final VoidCallback? onBack;
+
   const EventOverviewScreen({
     super.key,
     this.eventName = 'Eleanor & James',
@@ -26,6 +30,7 @@ class EventOverviewScreen extends StatefulWidget {
     this.location = 'The Botanical Gardens',
     this.imageUrl =
         'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&q=80&auto=format&fit=crop',
+    this.onBack,
   });
 
   @override
@@ -58,7 +63,7 @@ class _EventOverviewScreenState extends State<EventOverviewScreen> {
             date: widget.date,
             location: widget.location,
             imageUrl: widget.imageUrl,
-            onBack: () => Navigator.maybePop(context),
+            onBack: widget.onBack ?? () => Navigator.maybePop(context),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),

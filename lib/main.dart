@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboardingScreens/onboarding_flow.dart';
 
 void main() {
   runApp(const MemoryBloomApp());
@@ -21,7 +21,7 @@ class MemoryBloomApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const WelcomeScreen(),
+      home: const OnboardingFlow(),
       routes: {
         '/home': (context) => const HomeScreen(),
       },
